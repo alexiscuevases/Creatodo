@@ -1,4 +1,4 @@
-import { MessageCircle, Sparkles } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { Button } from './ui/button';
 
 export function CallToAction() {
