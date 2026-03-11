@@ -49,7 +49,7 @@ export function SocialFooter() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 mb-12">
           {/* Brand Section */}
           <div className="space-y-4">
-            <h3 className="text-primary">creatodo_</h3>
+            <h3 className="text-primary">Creatodo</h3>
             <p className="text-muted-foreground text-sm leading-relaxed">
               Creando momentos mágicos con amor y dedicación. 
               Transformamos tus ideas en realidad con detalles que perduran en el corazón.
@@ -104,7 +104,7 @@ export function SocialFooter() {
         <div className="border-t border-border/50 pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
             <p>
-              © {new Date().getFullYear()} creatodo_. Todos los derechos reservados.
+              © {new Date().getFullYear()} Creatodo. Todos los derechos reservados.
             </p>
             <p className="flex items-center gap-1">
               Hecho con <span className="text-primary">❤</span> desde Barranquilla
