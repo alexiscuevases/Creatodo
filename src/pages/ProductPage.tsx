@@ -1,12 +1,14 @@
 import { useParams, Link } from 'react-router-dom';
 import { SocialFooter } from '../components/SocialFooter';
 import { useProducts } from '../hooks/useProducts';
+import { useCategories } from '../hooks/useCategories';
 import { ArrowLeft } from 'lucide-react';
 import { Hero } from '@/components/Hero';
 
 export function ProductPage() {
   const { id } = useParams();
   const { products } = useProducts();
+  const { categories } = useCategories();
   const product = products.find(p => p.id === id);
   
   if (!product) {
@@ -53,7 +55,7 @@ export function ProductPage() {
             <div className="flex flex-col justify-center space-y-8">
               <div className="space-y-4">
                 <div className="inline-block bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide">
-                  {product.category}
+                  {categories.find(c => c.id === product.categoryId)?.name || 'Sin Categoría'}
                 </div>
                 <h1 className="text-4xl md:text-5xl font-bold text-foreground leading-tight font-script">{product.title}</h1>
                 <p className="text-3xl font-semibold text-primary">

@@ -1,8 +1,16 @@
 import { useState, useEffect } from 'react';
 import type { Category } from '../lib/data';
-import { dummyCategories } from '../lib/data';
+import { dummyCategories, generateSlug } from '../lib/data';
 
 const STORAGE_KEY = 'creatodo_categories';
+
+// Ensure backward compatibility: add slugs to old categories
+const sanitizeCategories = (cats: any[]): Category[] => {
+  return cats.map(c => ({
+    ...c,
+    slug: c.slug || generateSlug(c.name)
+  }));
+};
 
 export function useCategories() {
   const [categories, setCategories] = useState<Category[]>(() => {
@@ -10,7 +18,8 @@ export function useCategories() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? sanitizeCategories(parsed) : dummyCategories;
       } catch (e) {
         console.error('Error parsing stored categories', e);
       }

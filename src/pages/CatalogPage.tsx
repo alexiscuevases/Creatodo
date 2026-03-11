@@ -1,10 +1,12 @@
 import { Hero } from '@/components/Hero';
 import { SocialFooter } from '../components/SocialFooter';
 import { useProducts } from '../hooks/useProducts';
+import { useCategories } from '../hooks/useCategories';
 import { Link } from 'react-router-dom';
 
 export function CatalogPage() {
   const { products } = useProducts();
+  const { categories } = useCategories();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -28,7 +30,7 @@ export function CatalogPage() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-primary shadow-sm">
-                    {product.category}
+                    {categories.find(c => c.id === product.categoryId)?.name || 'Sin Categoría'}
                   </div>
                 </div>
                 <div className="p-5 flex flex-col flex-1 space-y-3">

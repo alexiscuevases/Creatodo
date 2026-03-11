@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
 import { useCategories } from '../hooks/useCategories';
+import { generateSlug } from '../lib/data';
 
 export function CatalogSection() {
   const { categories } = useCategories();
@@ -28,7 +29,7 @@ export function CatalogSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {categories.map((category) => (
             <Link
-              to="/catalog"
+              to={`/category/${category.slug || generateSlug(category.name)}`}
               key={category.id}
               className="group relative block bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-border hover:border-primary/40 cursor-pointer"
             >

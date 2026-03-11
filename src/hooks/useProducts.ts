@@ -1,8 +1,25 @@
 import { useState, useEffect } from 'react';
 import type { Product } from '../lib/data';
-import { dummyProducts } from '../lib/data';
+import { dummyProducts, dummyCategories } from '../lib/data';
 
 const STORAGE_KEY = 'creatodo_products';
+
+const sanitizeProducts = (prods: any[]): Product[] => {
+  return prods.map(p => {
+    // Si ya tiene categoryId lo devolvemos tal cual
+    if (p.categoryId) return p as Product;
+    
+    // Si sigue usando category en formato viejo, intentamos buscar el id de esa categoría
+    const matchedCategory = dummyCategories.find(c => c.name === p.category);
+    
+    // Removemos la prop vieja category, y agregamos categoryId
+    const { category, ...rest } = p;
+    return {
+      ...rest,
+      categoryId: matchedCategory ? matchedCategory.id : dummyCategories[0]?.id || 'cat-1'
+    } as Product;
+  });
+};
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>(() => {
@@ -10,7 +27,8 @@ export function useProducts() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? sanitizeProducts(parsed) : dummyProducts;
       } catch (e) {
         console.error('Error parsing stored products', e);
       }
@@ -59,12 +77,8 @@ export function useProducts() {
     saveProducts(products.filter(p => p.id !== id));
   };
 
-  // Extraer categorías únicas de forma dinámica de todos los productos
-  const categories = Array.from(new Set(products.map(p => p.category)));
-
   return {
     products,
-    categories,
     addProduct,
     updateProduct,
     deleteProduct,

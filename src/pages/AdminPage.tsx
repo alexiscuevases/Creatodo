@@ -32,7 +32,7 @@ export function AdminPage() {
         title: '',
         description: '',
         price: 0,
-        category: categories.length > 0 ? categories[0].name : '',
+        categoryId: categories.length > 0 ? categories[0].id : '',
         image: ''
       });
     }
@@ -153,7 +153,7 @@ export function AdminPage() {
                       </td>
                       <td className="py-4 px-6 text-sm">
                         <span className="bg-primary/10 text-primary font-medium px-3 py-1.5 rounded-full inline-block">
-                          {product.category}
+                          {categories.find(c => c.id === product.categoryId)?.name || 'Sin Categoría'}
                         </span>
                       </td>
                       <td className="py-4 px-6 font-semibold text-lg text-foreground">
@@ -320,21 +320,20 @@ export function AdminPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-foreground">Categoría</label>
-                    <input
+                    <select
                       required
-                      type="text"
-                      list="category-suggestions"
-                      value={formData.category}
-                      onChange={e => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full h-12 px-4 rounded-xl border border-input bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all"
-                      placeholder="Nueva categoría o selecciona una"
-                    />
-                    <datalist id="category-suggestions">
+                      value={formData.categoryId || ''}
+                      onChange={e => setFormData({ ...formData, categoryId: e.target.value })}
+                      className="w-full h-12 px-4 rounded-xl border border-input bg-background focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all cursor-pointer"
+                    >
+                      <option value="" disabled>Selecciona una categoría</option>
                       {categories.map(cat => (
-                        <option key={cat.id} value={cat.name} />
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
                       ))}
-                    </datalist>
-                    <p className="text-xs text-muted-foreground">Puedes escribir una nueva o elegir una existente.</p>
+                    </select>
+                    {categories.length === 0 && (
+                      <p className="text-xs text-destructive">Primero debes crear una categoría.</p>
+                    )}
                   </div>
                 </div>
 
