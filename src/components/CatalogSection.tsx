@@ -65,7 +65,7 @@ export function CatalogSection() {
             <Heart className="size-4 text-primary" />
             <span className="text-sm text-primary uppercase tracking-wider">Nuestros Catálogos</span>
           </div>
-          <h2 className="text-3xl md:text-4xl text-foreground">
+          <h2 className="text-3xl md:text-4xl text-foreground font-script">
             Descubre nuestras creaciones
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">

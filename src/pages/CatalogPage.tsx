@@ -1,23 +1,25 @@
-import { Header } from '../components/Header';
+import { Hero } from '@/components/Hero';
 import { SocialFooter } from '../components/SocialFooter';
-import { dummyProducts } from '../lib/data';
+import { useProducts } from '../hooks/useProducts';
 import { Link } from 'react-router-dom';
 
 export function CatalogPage() {
+  const { products } = useProducts();
+
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Hero />
       <main className="flex-1 flex flex-col py-12 md:py-20 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12 space-y-4">
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground">Catálogo Completo</h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground font-script">Catálogo Completo</h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Explora todos nuestros productos disponibles y encuentra el regalo perfecto.
             </p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {dummyProducts.map((product) => (
+            {products.map((product) => (
               <Link key={product.id} to={`/product/${product.id}`} className="group bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-border flex flex-col">
                 <div className="relative h-56 overflow-hidden">
                   <img 

@@ -1,17 +1,18 @@
 import { useParams, Link } from 'react-router-dom';
-import { Header } from '../components/Header';
 import { SocialFooter } from '../components/SocialFooter';
-import { dummyProducts } from '../lib/data';
-import { ArrowLeft, ShoppingCart } from 'lucide-react';
+import { useProducts } from '../hooks/useProducts';
+import { ArrowLeft } from 'lucide-react';
+import { Hero } from '@/components/Hero';
 
 export function ProductPage() {
   const { id } = useParams();
-  const product = dummyProducts.find(p => p.id === id);
+  const { products } = useProducts();
+  const product = products.find(p => p.id === id);
   
   if (!product) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Header />
+        <Hero />
         <main className="flex-1 flex items-center justify-center py-20 bg-background">
           <div className="text-center space-y-6 px-4">
             <h1 className="text-4xl font-bold text-foreground">Producto no encontrado</h1>
@@ -28,7 +29,7 @@ export function ProductPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      <Hero />
       <main className="flex-1 flex flex-col py-12 md:py-20 bg-background">
         <div className="container mx-auto px-4 max-w-6xl">
           <Link to="/catalog" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8">
@@ -54,7 +55,7 @@ export function ProductPage() {
                 <div className="inline-block bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide">
                   {product.category}
                 </div>
-                <h1 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">{product.title}</h1>
+                <h1 className="text-4xl md:text-5xl font-bold text-foreground leading-tight font-script">{product.title}</h1>
                 <p className="text-3xl font-semibold text-primary">
                   ${product.price.toLocaleString('es-CO')}
                 </p>
@@ -68,10 +69,10 @@ export function ProductPage() {
               </div>
               
               <div className="pt-8 flex flex-col sm:flex-row gap-4">
-                <button className="flex-1 flex items-center justify-center gap-2 h-14 bg-primary text-primary-foreground rounded-xl font-medium text-lg hover:bg-primary/90 transition-all hover:shadow-lg hover:-translate-y-0.5">
+                {/* <button className="flex-1 flex items-center justify-center gap-2 h-14 bg-primary text-primary-foreground rounded-xl font-medium text-lg hover:bg-primary/90 transition-all hover:shadow-lg hover:-translate-y-0.5">
                   <ShoppingCart className="size-5" />
                   Añadir al carrito
-                </button>
+                </button> */}
                 <button className="flex-1 flex items-center justify-center gap-2 h-14 bg-green-500 text-white rounded-xl font-medium text-lg hover:bg-green-600 transition-all hover:shadow-lg hover:-translate-y-0.5">
                   Comprar por WhatsApp
                 </button>
