@@ -3,16 +3,9 @@ import { Button } from './ui/button';
 
 export function CallToAction() {
   return (
-    <section className="py-16 md:py-20 bg-gradient-to-br from-primary via-primary/90 to-accent">
+    <section className="py-16 md:py-20 bg-gradient-to-br from-secondary to-primary">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto text-center space-y-8">
-          {/* Icon */}
-          <div className="flex justify-center">
-            <div className="bg-white/20 backdrop-blur-sm p-6 rounded-full">
-              <Sparkles className="size-12 text-white" />
-            </div>
-          </div>
-
           {/* Content */}
           <div className="space-y-4">
             <h2 className="text-3xl md:text-4xl lg:text-5xl text-white">

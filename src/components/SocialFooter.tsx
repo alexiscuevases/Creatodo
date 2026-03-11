@@ -107,7 +107,7 @@ export function SocialFooter() {
               © {new Date().getFullYear()} creatodo_. Todos los derechos reservados.
             </p>
             <p className="flex items-center gap-1">
-              Hecho con <span className="text-red-500">❤</span> en Barranquilla
+              Hecho con <span className="text-primary">❤</span> desde Barranquilla
             </p>
           </div>
         </div>

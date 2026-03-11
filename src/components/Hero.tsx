@@ -1,5 +1,3 @@
-import { Sparkles } from 'lucide-react';
-
 export function Hero() {
   return (
     <div className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-accent/20 to-secondary/30">
@@ -23,13 +21,9 @@ export function Hero() {
 
           {/* Brand Name */}
           <div className="space-y-3">
-            <div className="flex items-center justify-center gap-2">
-              <Sparkles className="size-6 text-primary animate-pulse" />
-              <h1 className="text-4xl md:text-5xl lg:text-6xl text-primary">
-                creatodo_
-              </h1>
-              <Sparkles className="size-6 text-primary animate-pulse" />
-            </div>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl text-primary">
+              creatodo_
+            </h1>
             <p className="text-accent-foreground tracking-[0.3em] uppercase text-xs md:text-sm">
               Detalles Creativos
             </p>
@@ -49,7 +43,7 @@ export function Hero() {
           {/* Location Badge */}
           <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-6 py-3 rounded-full shadow-md border border-primary/20">
             <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
-            <span className="text-sm text-foreground/70">Barranquilla, Colombia</span>
+            <span className="text-sm text-foreground/70">Envíos a toda Colombia</span>
           </div>
         </div>
       </div>

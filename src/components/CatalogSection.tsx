@@ -65,7 +65,7 @@ export function CatalogSection() {
             <span className="text-sm text-primary uppercase tracking-wider">Nuestros Catálogos</span>
           </div>
           <h2 className="text-3xl md:text-4xl text-foreground">
-            Descubre Nuestras Creaciones
+            Descubre nuestras creaciones
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
             Explora nuestra selección de productos y servicios, cada uno diseñado con amor y dedicación
