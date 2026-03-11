@@ -14,7 +14,7 @@ export function CatalogPage() {
       <main className="flex-1 flex flex-col py-12 md:py-20 bg-background">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12 space-y-4">
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground font-script">Catálogo Completo</h1>
+            <h1 className="text-4xl md:text-5xl font-medium text-foreground font-script">Catálogo Completo</h1>
             <p className="text-muted-foreground max-w-2xl mx-auto">
               Explora todos nuestros productos disponibles y encuentra el regalo perfecto.
             </p>
