@@ -1,4 +1,5 @@
 import { ArrowRight, Heart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
 interface Catalog {
@@ -75,9 +76,10 @@ export function CatalogSection() {
         {/* Catalog Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {catalogs.map((catalog) => (
-            <div
+            <Link
+              to="/catalog"
               key={catalog.id}
-              className="group relative bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-border hover:border-primary/40 cursor-pointer"
+              className="group relative block bg-card rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-border hover:border-primary/40 cursor-pointer"
             >
               {/* Image */}
               <div className="relative h-64 md:h-72 overflow-hidden">
@@ -106,7 +108,7 @@ export function CatalogSection() {
                   {catalog.description}
                 </p>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

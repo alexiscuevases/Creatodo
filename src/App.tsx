@@ -1,15 +1,16 @@
-import { Hero } from './components/Hero';
-import { CatalogSection } from './components/CatalogSection';
-import { CallToAction } from './components/CallToAction';
-import { SocialFooter } from './components/SocialFooter';
+import { Routes, Route } from 'react-router-dom';
+import { Home } from './pages/Home';
+import { CatalogPage } from './pages/CatalogPage';
+import { ProductPage } from './pages/ProductPage';
 
 export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
-      <Hero />
-      <CatalogSection />
-      <CallToAction />
-      <SocialFooter />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/catalog" element={<CatalogPage />} />
+        <Route path="/product/:id" element={<ProductPage />} />
+      </Routes>
     </div>
   );
 }
