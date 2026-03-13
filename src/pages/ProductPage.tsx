@@ -57,7 +57,7 @@ export function ProductPage() {
                 <div className="inline-block bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold tracking-wide">
                   {categories.find(c => c.id === product.categoryId)?.name || 'Sin Categoría'}
                 </div>
-                <h1 className="text-4xl md:text-5xl font-bold text-foreground leading-tight font-script">{product.title}</h1>
+                <h1 className="text-4xl md:text-5xl font-medium text-foreground leading-tight font-script">{product.title}</h1>
                 <p className="text-3xl font-semibold text-primary">
                   ${product.price.toLocaleString('es-CO')}
                 </p>

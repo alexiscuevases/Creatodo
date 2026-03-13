@@ -1,3 +1,8 @@
 name = "creatodo"
 compatibility_date = "2024-03-20"
 pages_build_output_dir = "dist"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "creatodo-db"
+database_id = "57c3aeb1-68ca-4a13-bc6e-3a328e741772"
