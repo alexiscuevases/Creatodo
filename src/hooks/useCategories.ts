@@ -1,77 +1,80 @@
-import { useState, useEffect } from 'react';
-import type { Category } from '../lib/data';
-import { dummyCategories, generateSlug } from '../lib/data';
-
-const STORAGE_KEY = 'creatodo_categories';
-
-// Ensure backward compatibility: add slugs to old categories
-const sanitizeCategories = (cats: any[]): Category[] => {
-  return cats.map(c => ({
-    ...c,
-    slug: c.slug || generateSlug(c.name)
-  }));
-};
+import { useState, useEffect, useCallback } from "react"
+import type { Category } from "../lib/data"
 
 export function useCategories() {
-  const [categories, setCategories] = useState<Category[]>(() => {
-    // Intentar leer de localStorage al inicializar
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        return Array.isArray(parsed) ? sanitizeCategories(parsed) : dummyCategories;
-      } catch (e) {
-        console.error('Error parsing stored categories', e);
-      }
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const fetchCategories = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch("/api/categories")
+      if (!res.ok) throw new Error("Error al cargar categorías")
+      const data = (await res.json()) as { categories: Category[] }
+      setCategories(data.categories)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido")
+    } finally {
+      setLoading(false)
     }
-    return dummyCategories;
-  });
+  }, [])
 
   useEffect(() => {
-    // Sincronizar estado entre diferentes pestañas o eventos locales
-    const handleStorageChange = () => {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        try {
-          setCategories(JSON.parse(stored));
-        } catch (e) {
-          console.error('Error parsing stored categories on update', e);
-        }
-      }
-    };
+    fetchCategories()
+  }, [fetchCategories])
 
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('categories-updated', handleStorageChange);
+  const addCategory = async (
+    category: Omit<Category, "id" | "slug">
+  ): Promise<Category> => {
+    const res = await fetch("/api/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(category),
+    })
+    if (!res.ok) {
+      const err = (await res.json()) as { error: string }
+      throw new Error(err.error || "Error al crear categoría")
+    }
+    const data = (await res.json()) as { category: Category }
+    setCategories((prev) => [...prev, data.category])
+    return data.category
+  }
 
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('categories-updated', handleStorageChange);
-    };
-  }, []);
+  const updateCategory = async (category: Category): Promise<Category> => {
+    const res = await fetch(`/api/categories/${category.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(category),
+    })
+    if (!res.ok) {
+      const err = (await res.json()) as { error: string }
+      throw new Error(err.error || "Error al actualizar categoría")
+    }
+    const data = (await res.json()) as { category: Category }
+    setCategories((prev) =>
+      prev.map((c) => (c.id === category.id ? data.category : c))
+    )
+    return data.category
+  }
 
-  const saveCategories = (newCategories: Category[]) => {
-    setCategories(newCategories);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newCategories));
-    // Disparar evento personalizado para que otras instancias del hook (en la misma ventana) se actualicen reactivamente
-    window.dispatchEvent(new Event('categories-updated'));
-  };
-
-  const addCategory = (category: Category) => {
-    saveCategories([...categories, category]);
-  };
-
-  const updateCategory = (updatedCategory: Category) => {
-    saveCategories(categories.map(c => c.id === updatedCategory.id ? updatedCategory : c));
-  };
-
-  const deleteCategory = (id: string) => {
-    saveCategories(categories.filter(c => c.id !== id));
-  };
+  const deleteCategory = async (id: string): Promise<void> => {
+    const res = await fetch(`/api/categories/${id}`, { method: "DELETE" })
+    if (!res.ok) {
+      const err = (await res.json()) as { error: string }
+      throw new Error(err.error || "Error al eliminar categoría")
+    }
+    setCategories((prev) => prev.filter((c) => c.id !== id))
+  }
 
   return {
     categories,
+    loading,
+    error,
+    refetch: fetchCategories,
     addCategory,
     updateCategory,
     deleteCategory,
-  };
+  }
 }

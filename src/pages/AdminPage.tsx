@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import { Hero } from "@/components/Hero"
 import { SocialFooter } from "../components/SocialFooter"
@@ -14,12 +14,25 @@ import {
   Package,
   FolderTree,
   LogOut,
+  Upload,
+  Loader2,
 } from "lucide-react"
 
 export function AdminPage() {
-  const { products, addProduct, updateProduct, deleteProduct } = useProducts()
-  const { categories, addCategory, updateCategory, deleteCategory } =
-    useCategories()
+  const {
+    products,
+    loading: productsLoading,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+  } = useProducts()
+  const {
+    categories,
+    loading: categoriesLoading,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+  } = useCategories()
   const { logout, username } = useAuth()
   const navigate = useNavigate()
 
@@ -32,25 +45,48 @@ export function AdminPage() {
     "products"
   )
 
+  // ── Product modal ──────────────────────────────────────────────────────────
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [formData, setFormData] = useState<Partial<Product>>({})
+  const [productSaving, setProductSaving] = useState(false)
+  const [productError, setProductError] = useState<string | null>(null)
+  const [productImageUploading, setProductImageUploading] = useState(false)
+  const productImageInputRef = useRef<HTMLInputElement>(null)
 
+  // ── Category modal ─────────────────────────────────────────────────────────
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false)
   const [categoryFormData, setCategoryFormData] = useState<Partial<Category>>(
     {}
   )
+  const [categorySaving, setCategorySaving] = useState(false)
+  const [categoryError, setCategoryError] = useState<string | null>(null)
+  const [categoryImageUploading, setCategoryImageUploading] = useState(false)
+  const categoryImageInputRef = useRef<HTMLInputElement>(null)
 
+  // ── Image upload helper ────────────────────────────────────────────────────
+  const uploadImage = async (file: File): Promise<string> => {
+    const fd = new FormData()
+    fd.append("file", file)
+    const res = await fetch("/api/upload", { method: "POST", body: fd })
+    if (!res.ok) {
+      const err = (await res.json()) as { error: string }
+      throw new Error(err.error || "Error al subir imagen")
+    }
+    const data = (await res.json()) as { url: string }
+    return data.url
+  }
+
+  // ── Product handlers ───────────────────────────────────────────────────────
   const handleOpenModal = (product?: Product) => {
-    // Set form data based on editing product or empty defaults
+    setProductError(null)
     if (product) {
       setEditingProduct(product)
       setFormData(product)
     } else {
       setEditingProduct(null)
       setFormData({
-        id: `prod-${Date.now()}`,
         title: "",
         description: "",
         price: 0,
@@ -65,29 +101,68 @@ export function AdminPage() {
     setIsModalOpen(false)
     setEditingProduct(null)
     setFormData({})
+    setProductError(null)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (editingProduct) {
-      updateProduct(formData as Product)
-    } else {
-      addProduct(formData as Product)
+  const handleProductImageFile = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setProductImageUploading(true)
+    setProductError(null)
+    try {
+      const url = await uploadImage(file)
+      setFormData((prev) => ({ ...prev, image: url }))
+    } catch (err) {
+      setProductError(
+        err instanceof Error ? err.message : "Error al subir imagen"
+      )
+    } finally {
+      setProductImageUploading(false)
     }
-    handleCloseModal()
   }
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setProductSaving(true)
+    setProductError(null)
+    try {
+      if (editingProduct) {
+        await updateProduct(formData as Product)
+      } else {
+        await addProduct(formData as Omit<Product, "id">)
+      }
+      handleCloseModal()
+    } catch (err) {
+      setProductError(err instanceof Error ? err.message : "Error al guardar")
+    } finally {
+      setProductSaving(false)
+    }
+  }
+
+  const handleDeleteProduct = async (product: Product) => {
+    if (!confirm(`¿Estás seguro de eliminar "${product.title}"?`)) return
+    try {
+      await deleteProduct(product.id)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al eliminar")
+    }
+  }
+
+  // ── Category handlers ──────────────────────────────────────────────────────
   const handleOpenCategoryModal = (category?: Category) => {
+    setCategoryError(null)
     if (category) {
       setEditingCategory(category)
       setCategoryFormData(category)
     } else {
       setEditingCategory(null)
       setCategoryFormData({
-        id: `cat-${Date.now()}`,
         name: "",
         description: "",
         image: "",
+        accent: "",
       })
     }
     setIsCategoryModalOpen(true)
@@ -97,16 +172,53 @@ export function AdminPage() {
     setIsCategoryModalOpen(false)
     setEditingCategory(null)
     setCategoryFormData({})
+    setCategoryError(null)
   }
 
-  const handleCategorySubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (editingCategory) {
-      updateCategory(categoryFormData as Category)
-    } else {
-      addCategory(categoryFormData as Category)
+  const handleCategoryImageFile = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setCategoryImageUploading(true)
+    setCategoryError(null)
+    try {
+      const url = await uploadImage(file)
+      setCategoryFormData((prev) => ({ ...prev, image: url }))
+    } catch (err) {
+      setCategoryError(
+        err instanceof Error ? err.message : "Error al subir imagen"
+      )
+    } finally {
+      setCategoryImageUploading(false)
     }
-    handleCloseCategoryModal()
+  }
+
+  const handleCategorySubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setCategorySaving(true)
+    setCategoryError(null)
+    try {
+      if (editingCategory) {
+        await updateCategory(categoryFormData as Category)
+      } else {
+        await addCategory(categoryFormData as Omit<Category, "id" | "slug">)
+      }
+      handleCloseCategoryModal()
+    } catch (err) {
+      setCategoryError(err instanceof Error ? err.message : "Error al guardar")
+    } finally {
+      setCategorySaving(false)
+    }
+  }
+
+  const handleDeleteCategory = async (category: Category) => {
+    if (!confirm(`¿Estás seguro de eliminar "${category.name}"?`)) return
+    try {
+      await deleteCategory(category.id)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al eliminar")
+    }
   }
 
   return (
@@ -195,79 +307,90 @@ export function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {products.map((product) => (
-                      <tr
-                        key={product.id}
-                        className="group transition-colors hover:bg-secondary/10"
-                      >
-                        <td className="w-24 px-6 py-4">
-                          <img
-                            src={product.image}
-                            alt={product.title}
-                            className="h-16 w-16 rounded-xl border border-border object-cover"
-                          />
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="mb-1 text-base font-semibold text-foreground">
-                            {product.title}
-                          </p>
-                          <p className="line-clamp-2 max-w-sm text-sm text-muted-foreground">
-                            {product.description}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4 text-sm">
-                          <span className="inline-block rounded-full bg-primary/10 px-3 py-1.5 font-medium text-primary">
-                            {categories.find((c) => c.id === product.categoryId)
-                              ?.name || "Sin Categoría"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-lg font-semibold text-foreground">
-                          ${product.price.toLocaleString("es-CO")}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-3">
-                            <button
-                              onClick={() => handleOpenModal(product)}
-                              className="rounded-lg p-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
-                              title="Editar"
-                            >
-                              <Edit className="size-5" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (
-                                  confirm(
-                                    `¿Estás seguro de eliminar "${product.title}"?`
-                                  )
-                                )
-                                  deleteProduct(product.id)
-                              }}
-                              className="rounded-lg p-2 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive"
-                              title="Eliminar"
-                            >
-                              <Trash2 className="size-5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {products.length === 0 && (
+                    {productsLoading ? (
                       <tr>
                         <td
                           colSpan={5}
                           className="py-16 text-center text-muted-foreground"
                         >
-                          <p className="text-lg">
-                            No hay productos en el catálogo.
-                          </p>
-                          <button
-                            onClick={() => handleOpenModal()}
-                            className="mt-2 font-medium text-primary hover:underline"
-                          >
-                            ¡Agrega el primer producto!
-                          </button>
+                          <Loader2 className="mx-auto mb-2 size-6 animate-spin" />
+                          Cargando productos...
                         </td>
                       </tr>
+                    ) : (
+                      <>
+                        {products.map((product) => (
+                          <tr
+                            key={product.id}
+                            className="group transition-colors hover:bg-secondary/10"
+                          >
+                            <td className="w-24 px-6 py-4">
+                              <img
+                                src={
+                                  product.image ||
+                                  "https://placehold.co/64x64?text=Sin+img"
+                                }
+                                alt={product.title}
+                                className="h-16 w-16 rounded-xl border border-border object-cover"
+                              />
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="mb-1 text-base font-semibold text-foreground">
+                                {product.title}
+                              </p>
+                              <p className="line-clamp-2 max-w-sm text-sm text-muted-foreground">
+                                {product.description}
+                              </p>
+                            </td>
+                            <td className="px-6 py-4 text-sm">
+                              <span className="inline-block rounded-full bg-primary/10 px-3 py-1.5 font-medium text-primary">
+                                {categories.find(
+                                  (c) => c.id === product.categoryId
+                                )?.name || "Sin Categoría"}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-lg font-semibold text-foreground">
+                              ${product.price.toLocaleString("es-CO")}
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-3">
+                                <button
+                                  onClick={() => handleOpenModal(product)}
+                                  className="rounded-lg p-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
+                                  title="Editar"
+                                >
+                                  <Edit className="size-5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteProduct(product)}
+                                  className="rounded-lg p-2 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 className="size-5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {products.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={5}
+                              className="py-16 text-center text-muted-foreground"
+                            >
+                              <p className="text-lg">
+                                No hay productos en el catálogo.
+                              </p>
+                              <button
+                                onClick={() => handleOpenModal()}
+                                className="mt-2 font-medium text-primary hover:underline"
+                              >
+                                ¡Agrega el primer producto!
+                              </button>
+                            </td>
+                          </tr>
+                        )}
+                      </>
                     )}
                   </tbody>
                 </table>
@@ -294,72 +417,84 @@ export function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {categories.map((category) => (
-                      <tr
-                        key={category.id}
-                        className="group transition-colors hover:bg-secondary/10"
-                      >
-                        <td className="w-24 px-6 py-4">
-                          <img
-                            src={category.image}
-                            alt={category.name}
-                            className="h-16 w-16 rounded-xl border border-border object-cover"
-                          />
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="mb-1 text-base font-semibold text-foreground">
-                            {category.name}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="line-clamp-2 max-w-sm text-sm text-muted-foreground">
-                            {category.description}
-                          </p>
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-3">
-                            <button
-                              onClick={() => handleOpenCategoryModal(category)}
-                              className="rounded-lg p-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
-                              title="Editar"
-                            >
-                              <Edit className="size-5" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                if (
-                                  confirm(
-                                    `¿Estás seguro de eliminar "${category.name}"?`
-                                  )
-                                )
-                                  deleteCategory(category.id)
-                              }}
-                              className="rounded-lg p-2 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive"
-                              title="Eliminar"
-                            >
-                              <Trash2 className="size-5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {categories.length === 0 && (
+                    {categoriesLoading ? (
                       <tr>
                         <td
                           colSpan={4}
                           className="py-16 text-center text-muted-foreground"
                         >
-                          <p className="text-lg">
-                            No hay categorías en el catálogo.
-                          </p>
-                          <button
-                            onClick={() => handleOpenCategoryModal()}
-                            className="mt-2 font-medium text-primary hover:underline"
-                          >
-                            ¡Agrega la primera categoría!
-                          </button>
+                          <Loader2 className="mx-auto mb-2 size-6 animate-spin" />
+                          Cargando categorías...
                         </td>
                       </tr>
+                    ) : (
+                      <>
+                        {categories.map((category) => (
+                          <tr
+                            key={category.id}
+                            className="group transition-colors hover:bg-secondary/10"
+                          >
+                            <td className="w-24 px-6 py-4">
+                              <img
+                                src={
+                                  category.image ||
+                                  "https://placehold.co/64x64?text=Sin+img"
+                                }
+                                alt={category.name}
+                                className="h-16 w-16 rounded-xl border border-border object-cover"
+                              />
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="mb-1 text-base font-semibold text-foreground">
+                                {category.name}
+                              </p>
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="line-clamp-2 max-w-sm text-sm text-muted-foreground">
+                                {category.description}
+                              </p>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-3">
+                                <button
+                                  onClick={() =>
+                                    handleOpenCategoryModal(category)
+                                  }
+                                  className="rounded-lg p-2 text-muted-foreground transition-all hover:bg-primary/10 hover:text-primary"
+                                  title="Editar"
+                                >
+                                  <Edit className="size-5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteCategory(category)}
+                                  className="rounded-lg p-2 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive"
+                                  title="Eliminar"
+                                >
+                                  <Trash2 className="size-5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {categories.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={4}
+                              className="py-16 text-center text-muted-foreground"
+                            >
+                              <p className="text-lg">
+                                No hay categorías en el catálogo.
+                              </p>
+                              <button
+                                onClick={() => handleOpenCategoryModal()}
+                                className="mt-2 font-medium text-primary hover:underline"
+                              >
+                                ¡Agrega la primera categoría!
+                              </button>
+                            </td>
+                          </tr>
+                        )}
+                      </>
                     )}
                   </tbody>
                 </table>
@@ -369,7 +504,7 @@ export function AdminPage() {
         </div>
       </main>
 
-      {/* Modal Form */}
+      {/* Product Modal Form */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
           <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
@@ -379,12 +514,18 @@ export function AdminPage() {
               </h2>
               <button
                 onClick={handleCloseModal}
-                className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                disabled={productSaving}
+                className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
               >
                 <X className="size-5" />
               </button>
             </div>
             <div className="custom-scrollbar overflow-y-auto p-6">
+              {productError && (
+                <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  {productError}
+                </div>
+              )}
               <form
                 id="product-form"
                 onSubmit={handleSubmit}
@@ -397,7 +538,7 @@ export function AdminPage() {
                   <input
                     required
                     type="text"
-                    value={formData.title}
+                    value={formData.title ?? ""}
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
@@ -413,7 +554,7 @@ export function AdminPage() {
                   <textarea
                     required
                     rows={4}
-                    value={formData.description}
+                    value={formData.description ?? ""}
                     onChange={(e) =>
                       setFormData({ ...formData, description: e.target.value })
                     }
@@ -431,7 +572,7 @@ export function AdminPage() {
                       required
                       type="number"
                       min="0"
-                      value={formData.price}
+                      value={formData.price ?? 0}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
@@ -472,18 +613,40 @@ export function AdminPage() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-foreground">
-                    Imagen (URL)
+                    Imagen
                   </label>
+                  {/* Hidden file input */}
                   <input
-                    required
-                    type="url"
-                    value={formData.image}
-                    onChange={(e) =>
-                      setFormData({ ...formData, image: e.target.value })
-                    }
-                    className="h-12 w-full rounded-xl border border-input bg-background px-4 transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
-                    placeholder="https://ejemplo.com/imagen.jpg"
+                    ref={productImageInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleProductImageFile}
                   />
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={formData.image ?? ""}
+                      onChange={(e) =>
+                        setFormData({ ...formData, image: e.target.value })
+                      }
+                      className="h-12 flex-1 rounded-xl border border-input bg-background px-4 transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                      placeholder="https://ejemplo.com/imagen.jpg"
+                    />
+                    <button
+                      type="button"
+                      disabled={productImageUploading}
+                      onClick={() => productImageInputRef.current?.click()}
+                      className="flex h-12 items-center gap-2 rounded-xl border border-border bg-secondary px-4 text-sm font-medium transition-colors hover:bg-secondary/80 disabled:opacity-60"
+                    >
+                      {productImageUploading ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Upload className="size-4" />
+                      )}
+                      Subir
+                    </button>
+                  </div>
                   {formData.image && (
                     <div className="mt-4 flex items-center gap-4 rounded-xl border border-border bg-secondary/20 p-4">
                       <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-border bg-background">
@@ -492,9 +655,8 @@ export function AdminPage() {
                           alt="Previsualización"
                           className="h-full w-full object-cover"
                           onError={(e) => {
-                            // Fallback in case of broken image URL
                             ;(e.target as HTMLImageElement).src =
-                              "https://images.unsplash.com/photo-1560393464-5c69a73c5770?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlcnJvcnxlbnwwfHx8fDE3NzMxODQ2Njl8MA&ixlib=rb-4.1.0&q=80&w=1080"
+                              "https://placehold.co/96x96?text=Error"
                           }}
                         />
                       </div>
@@ -510,15 +672,18 @@ export function AdminPage() {
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="rounded-xl px-6 py-2.5 font-medium text-muted-foreground transition-colors hover:bg-secondary"
+                disabled={productSaving}
+                className="rounded-xl px-6 py-2.5 font-medium text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 form="product-form"
-                className="rounded-xl bg-primary px-6 py-2.5 font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                disabled={productSaving || productImageUploading}
+                className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-60"
               >
+                {productSaving && <Loader2 className="size-4 animate-spin" />}
                 {editingProduct ? "Actualizar Producto" : "Guardar Producto"}
               </button>
             </div>
@@ -535,12 +700,18 @@ export function AdminPage() {
               </h2>
               <button
                 onClick={handleCloseCategoryModal}
-                className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                disabled={categorySaving}
+                className="rounded-xl p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-50"
               >
                 <X className="size-5" />
               </button>
             </div>
             <div className="custom-scrollbar overflow-y-auto p-6">
+              {categoryError && (
+                <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  {categoryError}
+                </div>
+              )}
               <form
                 id="category-form"
                 onSubmit={handleCategorySubmit}
@@ -553,7 +724,7 @@ export function AdminPage() {
                   <input
                     required
                     type="text"
-                    value={categoryFormData.name}
+                    value={categoryFormData.name ?? ""}
                     onChange={(e) =>
                       setCategoryFormData({
                         ...categoryFormData,
@@ -572,7 +743,7 @@ export function AdminPage() {
                   <textarea
                     required
                     rows={4}
-                    value={categoryFormData.description}
+                    value={categoryFormData.description ?? ""}
                     onChange={(e) =>
                       setCategoryFormData({
                         ...categoryFormData,
@@ -586,21 +757,43 @@ export function AdminPage() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-foreground">
-                    Imagen (URL)
+                    Imagen
                   </label>
+                  {/* Hidden file input */}
                   <input
-                    required
-                    type="url"
-                    value={categoryFormData.image}
-                    onChange={(e) =>
-                      setCategoryFormData({
-                        ...categoryFormData,
-                        image: e.target.value,
-                      })
-                    }
-                    className="h-12 w-full rounded-xl border border-input bg-background px-4 transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
-                    placeholder="https://ejemplo.com/imagen.jpg"
+                    ref={categoryImageInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className="hidden"
+                    onChange={handleCategoryImageFile}
                   />
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      value={categoryFormData.image ?? ""}
+                      onChange={(e) =>
+                        setCategoryFormData({
+                          ...categoryFormData,
+                          image: e.target.value,
+                        })
+                      }
+                      className="h-12 flex-1 rounded-xl border border-input bg-background px-4 transition-all outline-none focus:border-primary focus:ring-2 focus:ring-primary"
+                      placeholder="https://ejemplo.com/imagen.jpg"
+                    />
+                    <button
+                      type="button"
+                      disabled={categoryImageUploading}
+                      onClick={() => categoryImageInputRef.current?.click()}
+                      className="flex h-12 items-center gap-2 rounded-xl border border-border bg-secondary px-4 text-sm font-medium transition-colors hover:bg-secondary/80 disabled:opacity-60"
+                    >
+                      {categoryImageUploading ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Upload className="size-4" />
+                      )}
+                      Subir
+                    </button>
+                  </div>
                   {categoryFormData.image && (
                     <div className="mt-4 flex items-center gap-4 rounded-xl border border-border bg-secondary/20 p-4">
                       <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-border bg-background">
@@ -610,7 +803,7 @@ export function AdminPage() {
                           className="h-full w-full object-cover"
                           onError={(e) => {
                             ;(e.target as HTMLImageElement).src =
-                              "https://images.unsplash.com/photo-1560393464-5c69a73c5770?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlcnJvcnxlbnwwfHx8fDE3NzMxODQ2Njl8MA&ixlib=rb-4.1.0&q=80&w=1080"
+                              "https://placehold.co/96x96?text=Error"
                           }}
                         />
                       </div>
@@ -626,15 +819,18 @@ export function AdminPage() {
               <button
                 type="button"
                 onClick={handleCloseCategoryModal}
-                className="rounded-xl px-6 py-2.5 font-medium text-muted-foreground transition-colors hover:bg-secondary"
+                disabled={categorySaving}
+                className="rounded-xl px-6 py-2.5 font-medium text-muted-foreground transition-colors hover:bg-secondary disabled:opacity-50"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 form="category-form"
-                className="rounded-xl bg-primary px-6 py-2.5 font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                disabled={categorySaving || categoryImageUploading}
+                className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-60"
               >
+                {categorySaving && <Loader2 className="size-4 animate-spin" />}
                 {editingCategory ? "Actualizar Categoría" : "Guardar Categoría"}
               </button>
             </div>

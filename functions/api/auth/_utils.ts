@@ -2,6 +2,7 @@
 
 export interface Env {
   DB: D1Database
+  STORAGE: R2Bucket
 }
 
 export const SESSION_COOKIE = "creatodo_session"
