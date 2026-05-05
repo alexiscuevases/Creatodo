@@ -10,3 +10,8 @@ database_id = "57c3aeb1-68ca-4a13-bc6e-3a328e741772"
 [[r2_buckets]]
 binding = "STORAGE"
 bucket_name = "creatodo-storage"
+
+[ai]
+binding = "AI"
+
+# Set REMOVE_BG_API_KEY as a secret:  wrangler pages secret put REMOVE_BG_API_KEY

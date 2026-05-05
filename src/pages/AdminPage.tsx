@@ -16,7 +16,11 @@ import {
   LogOut,
   Upload,
   Loader2,
+  Wand2,
+  MessageSquare,
 } from "lucide-react"
+import { RemoveBgTool } from "@/components/admin/RemoveBgTool"
+import { ChatTool } from "@/components/admin/ChatTool"
 
 export function AdminPage() {
   const {
@@ -41,9 +45,9 @@ export function AdminPage() {
     navigate("/admin/login")
   }
 
-  const [activeTab, setActiveTab] = useState<"products" | "categories">(
-    "products"
-  )
+  const [activeTab, setActiveTab] = useState<
+    "products" | "categories" | "remove-bg" | "chat"
+  >("products")
 
   // ── Product modal ──────────────────────────────────────────────────────────
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
@@ -250,19 +254,21 @@ export function AdminPage() {
                 <LogOut className="size-4" />
                 <span className="hidden sm:inline">Salir</span>
               </button>
-              <button
-                onClick={() =>
-                  activeTab === "products"
-                    ? handleOpenModal()
-                    : handleOpenCategoryModal()
-                }
-                className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-all hover:scale-105 hover:bg-primary/90"
-              >
-                <Plus className="size-5" />
-                {activeTab === "products"
-                  ? "Nuevo Producto"
-                  : "Nueva Categoría"}
-              </button>
+              {(activeTab === "products" || activeTab === "categories") && (
+                <button
+                  onClick={() =>
+                    activeTab === "products"
+                      ? handleOpenModal()
+                      : handleOpenCategoryModal()
+                  }
+                  className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-all hover:scale-105 hover:bg-primary/90"
+                >
+                  <Plus className="size-5" />
+                  {activeTab === "products"
+                    ? "Nuevo Producto"
+                    : "Nueva Categoría"}
+                </button>
+              )}
             </div>
           </div>
 
@@ -281,9 +287,27 @@ export function AdminPage() {
               <FolderTree className="size-4" />
               Categorías
             </button>
+            <button
+              onClick={() => setActiveTab("remove-bg")}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-6 py-2.5 font-medium transition-all sm:flex-none ${activeTab === "remove-bg" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"}`}
+            >
+              <Wand2 className="size-4" />
+              Remover fondo
+            </button>
+            <button
+              onClick={() => setActiveTab("chat")}
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-6 py-2.5 font-medium transition-all sm:flex-none ${activeTab === "chat" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"}`}
+            >
+              <MessageSquare className="size-4" />
+              Chat
+            </button>
           </div>
 
-          {activeTab === "products" ? (
+          {activeTab === "remove-bg" ? (
+            <RemoveBgTool />
+          ) : activeTab === "chat" ? (
+            <ChatTool />
+          ) : activeTab === "products" ? (
             <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-left">

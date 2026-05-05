@@ -1,5 +1,8 @@
-import { MessageCircle } from 'lucide-react';
-import { Button } from './ui/button';
+import { MessageCircle, Instagram } from 'lucide-react';
+import { buttonVariants } from './ui/button';
+
+const WHATSAPP_URL = 'https://wa.me/573013085567';
+const INSTAGRAM_URL = 'https://instagram.com/creatodo_';
 
 export function CallToAction() {
   return (
@@ -19,20 +22,33 @@ export function CallToAction() {
 
           {/* CTA Button */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-            <Button
-              size="lg"
-              className="bg-white text-primary hover:bg-white/90 shadow-xl hover:shadow-2xl transition-all duration-300 px-8 py-6 text-lg group"
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({
+                size: "lg",
+                className:
+                  "bg-white text-primary hover:bg-white/90 shadow-xl hover:shadow-2xl transition-all duration-300 px-8 py-6 text-lg group",
+              })}
             >
               <MessageCircle className="size-5 mr-2 group-hover:scale-110 transition-transform" />
               Contáctanos por WhatsApp
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-2 border-white text-white hover:bg-white hover:text-primary shadow-lg transition-all duration-300 px-8 py-6 text-lg"
+            </a>
+            <a
+              href={INSTAGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({
+                size: "lg",
+                variant: "outline",
+                className:
+                  "border-2 border-white text-white hover:bg-white hover:text-primary shadow-lg transition-all duration-300 px-8 py-6 text-lg group",
+              })}
             >
+              <Instagram className="size-5 mr-2 group-hover:scale-110 transition-transform" />
               Ver Instagram
-            </Button>
+            </a>
           </div>
 
           {/* Trust Badge */}

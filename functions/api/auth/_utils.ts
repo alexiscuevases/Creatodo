@@ -3,6 +3,24 @@
 export interface Env {
   DB: D1Database
   STORAGE: R2Bucket
+  AI: Ai
+  REMOVE_BG_API_KEY?: string
+}
+
+/** Returns the authenticated user id from the session cookie, or null. */
+export async function requireUserId(
+  request: Request,
+  env: Env
+): Promise<number | null> {
+  const cookies = parseCookies(request.headers.get("Cookie"))
+  const sessionId = cookies[SESSION_COOKIE]
+  if (!sessionId) return null
+  const row = (await env.DB.prepare(
+    `SELECT user_id FROM sessions WHERE id = ? AND expires_at > datetime('now')`
+  )
+    .bind(sessionId)
+    .first()) as { user_id: number } | null
+  return row?.user_id ?? null
 }
 
 export const SESSION_COOKIE = "creatodo_session"

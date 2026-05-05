@@ -40,6 +40,18 @@ CREATE TABLE IF NOT EXISTS products (
   FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
 
+-- Chat messages (admin assistant memory)
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  role TEXT NOT NULL,
+  content TEXT NOT NULL,
+  tokens INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_user ON chat_messages(user_id, created_at);
+
 -- Default admin user: username=admin, password=admin1234
 -- SHA-256("admin1234") = ac9689e2272427085e35b9d3e3e8bed88cb3434828b43b86fc0596cad4c6e270
 -- Change the hash after running:
