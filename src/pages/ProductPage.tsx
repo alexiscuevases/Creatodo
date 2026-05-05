@@ -75,9 +75,14 @@ export function ProductPage() {
                   <ShoppingCart className="size-5" />
                   Añadir al carrito
                 </button> */}
-                <button className="flex-1 flex items-center justify-center gap-2 h-14 bg-green-500 text-white rounded-xl font-medium text-lg hover:bg-green-600 transition-all hover:shadow-lg hover:-translate-y-0.5">
+                <a
+                  href={`https://wa.me/573013085567?text=${encodeURIComponent(`Estoy interesado en este producto.\n${window.location.href}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 h-14 bg-green-500 text-white rounded-xl font-medium text-lg hover:bg-green-600 transition-all hover:shadow-lg hover:-translate-y-0.5"
+                >
                   Comprar por WhatsApp
-                </button>
+                </a>
               </div>
             </div>
           </div>
